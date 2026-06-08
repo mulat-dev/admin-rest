@@ -18,6 +18,19 @@
   font-weight: 600;
   margin: 0;
 }
+/* Urgent pending orders */
+.urgent-order {
+  background-color: #fff3cd;
+}
+
+/* Search input */
+.search-input {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-right: 10px;
+}
+
 
 .table-wrapper {
   overflow-x: auto;

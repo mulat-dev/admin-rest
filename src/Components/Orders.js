@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../Styles/table.css";
 
-export default function Orders({ orders = [], setOrders, showNotification }) {
+export default function Orders({ orders = [], setOrders, deliverers = [], setDeliverers, showNotification }) {
   const [filter, setFilter] = useState("all");
 
   const handleStatusChange = (orderId, newStatus) => {
@@ -10,30 +10,45 @@ export default function Orders({ orders = [], setOrders, showNotification }) {
         order.id === orderId ? { ...order, status: newStatus } : order
       )
     );
+    // Free deliverer if delivered
+    if (newStatus === "delivered") {
+      const order = orders.find(o => o.id === orderId);
+      if (order && order.assignedDelivererId) {
+        setDeliverers(prev =>
+          prev.map(d =>
+            d.id === order.assignedDelivererId ? { ...d, status: "Available" } : d
+          )
+        );
+      }
+    }
     showNotification(`Order ${orderId} status updated to ${newStatus}`, "success");
   };
 
-  const filteredOrders =
-    filter === "all" ? orders : orders.filter(order => order.status === filter);
-
-  const viewOrder = orderId => {
-    const order = orders.find(o => o.id === orderId);
-    if (order) {
-      alert(
-        `Order Details:\n\nID: ${order.id}\nCustomer: ${order.customer.name}\nPhone: ${order.customer.phone}\nTotal: ${order.total} ETB\nStatus: ${order.status}`
-      );
-    }
+  const handleDelivererChange = (orderId, newDelivererId) => {
+    setOrders(prev =>
+      prev.map(order =>
+        order.id === orderId ? { ...order, assignedDelivererId: newDelivererId } : order
+      )
+    );
+    setDeliverers(prev =>
+      prev.map(d =>
+        d.id === newDelivererId ? { ...d, status: "Busy" } : d
+      )
+    );
+    showNotification(`Order ${orderId} reassigned to ${newDelivererId}`, "success");
   };
 
-  const printOrder = orderId => {
-    showNotification(`Printing order ${orderId}...`, "success");
+  const getDelivererName = (id) => {
+    const d = deliverers.find(del => del.id === id);
+    return d ? d.name : "Unassigned";
   };
+
+  const filteredOrders = filter === "all" ? orders : orders.filter(order => order.status === filter);
 
   return (
     <div className="orders-container">
-      {/* Header Row */}
       <div className="orders-header">
-      <h3>Order Management</h3>
+        <h3>Order Management</h3>
         <select
           value={filter}
           onChange={e => setFilter(e.target.value)}
@@ -48,7 +63,6 @@ export default function Orders({ orders = [], setOrders, showNotification }) {
         </select>
       </div>
 
-      {/* Orders Table */}
       <div className="table-wrapper">
         <table className="orders-table">
           <thead>
@@ -58,6 +72,7 @@ export default function Orders({ orders = [], setOrders, showNotification }) {
               <th>Items</th>
               <th>Total</th>
               <th>Status</th>
+              <th>Deliverer</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -67,18 +82,12 @@ export default function Orders({ orders = [], setOrders, showNotification }) {
                 <tr key={order.id}>
                   <td>
                     <div className="order-id">{order.id}</div>
-                    <div className="order-time">
-                      {order.time.toLocaleString()}
-                    </div>
+                    <div className="order-time">{order.time.toLocaleString()}</div>
                   </td>
                   <td>
                     <div className="customer-name">{order.customer.name}</div>
-                    <div className="customer-phone">
-                      {order.customer.phone}
-                    </div>
-                    <div className="customer-address">
-                      {order.customer.address}
-                    </div>
+                    <div className="customer-phone">{order.customer.phone}</div>
+                    <div className="customer-address">{order.customer.address}</div>
                   </td>
                   <td>
                     {order.items.map((item, idx) => (
@@ -102,17 +111,24 @@ export default function Orders({ orders = [], setOrders, showNotification }) {
                     </select>
                   </td>
                   <td>
+                    <select
+                      value={order.assignedDelivererId || ""}
+                      onChange={e => handleDelivererChange(order.id, e.target.value)}
+                    >
+                      <option value="">Unassigned</option>
+                      {deliverers.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} ({d.status})
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
                     <div className="actions">
-                      <button
-                        onClick={() => viewOrder(order.id)}
-                        className="view-btn"
-                      >
+                      <button onClick={() => alert("View order")} className="view-btn">
                         <i className="fas fa-eye"></i>
                       </button>
-                      <button
-                        onClick={() => printOrder(order.id)}
-                        className="print-btn"
-                      >
+                      <button onClick={() => showNotification(`Printing ${order.id}`, "success")} className="print-btn">
                         <i className="fas fa-print"></i>
                       </button>
                     </div>
@@ -121,9 +137,7 @@ export default function Orders({ orders = [], setOrders, showNotification }) {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="empty-state">
-                  No orders found.
-                </td>
+                <td colSpan="7" className="empty-state">No orders found.</td>
               </tr>
             )}
           </tbody>

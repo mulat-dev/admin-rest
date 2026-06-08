@@ -8,6 +8,8 @@ export default function Header({ activeSection }) {
     menu: "Menu Management",
     customers: "Customer Management",
     analytics: "Analytics & Reports",
+    deliverers: "Deliverer Management",
+    report: "Reports",
     settings: "Restaurant Settings",
   };
 
